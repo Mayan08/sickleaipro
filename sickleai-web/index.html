@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SickleAI Pro - Medical Management Platform</title>
+  
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Libraries -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',  // Professional blue instead of red
+            secondary: '#1e40af',
+            highlight: '#f59e0b' // For important elements
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #ffffff;
+      color: #374151; /* Soft gray for text */
+    }
+    
+    .medical-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e5e7eb;
+    }
+    
+    .medical-card:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+      transition: all 0.3s ease;
+    }
+    
+    .emergency-card {
+      border-left: 4px solid #ef4444;
+    }
+    
+    .data-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1e40af;
+    }
+    
+    .nav-link {
+      position: relative;
+    }
+    
+    .nav-link:after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -4px;
+      left: 0;
+      background-color: #3b82f6;
+      transition: width 0.3s ease;
+    }
+    
+    .nav-link:hover:after {
+      width: 100%;
+    }
+    
+    #gameCanvas {
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    /* Pulse animation for alerts */
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    
+    .pulse-alert {
+      animation: pulse 1.5s infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Professional Medical Header -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="bg-blue-100 p-2 rounded-lg">
+            <i class="fas fa-heartbeat text-primary text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800">SickleAI <span class="text-primary">Pro</span></h1>
+            <p class="text-xs text-gray-500">Medical Management Platform</p>
+          </div>
+        </div>
+        
+        <nav class="hidden md:flex items-center space-x-8">
+          <a href="#dashboard" class="nav-link text-gray-700 font-medium">Dashboard</a>
+          <a href="#predictor" class="nav-link text-gray-700 font-medium">Risk Assessment</a>
+          <a href="#game" class="nav-link text-gray-700 font-medium">Patient Education</a>
+          <a href="#telemed" class="nav-link text-gray-700 font-medium">Telemedicine</a>
+        </nav>
+        
+        <div class="flex items-center space-x-4">
+          <button class="md:hidden p-2 text-gray-500">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+          <div class="relative">
+            <i class="fas fa-bell text-gray-600"></i>
+            <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+          </div>
+          <div class="hidden md:flex items-center space-x-2 bg-blue-50 rounded-full px-4 py-1">
+            <div class="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+              DR
+            </div>
+            <span class="text-sm font-medium text-gray-700">Dr/patient</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="bg-gray-50">
+    <!-- Hero Section (Clinical Focus) -->
+    <section class="bg-gradient-to-r from-primary to-secondary py-12 text-white">
+      <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row items-center justify-between">
+          <div class="md:w-1/2 mb-8 md:mb-0">
+            <h2 class="text-3xl font-bold mb-4">Sickle Cell Disease <br>Clinical Management Suite</h2>
+            <p class="text-blue-100 mb-6">AI-powered tools for hematologists and patients to monitor, predict, and manage sickle cell complications</p>
+            <div class="flex space-x-3">
+              <button class="bg-white text-primary px-6 py-2 rounded-full font-medium hover:bg-blue-50 transition">
+                Doctor Login
+              </button>
+              <button class="border border-white text-white px-6 py-2 rounded-full font-medium hover:bg-white hover:text-primary transition">
+                Patient Access
+              </button>
+            </div>
+          </div>
+          <div class="md:w-1/2 flex justify-center">
+            <img src="https://placehold.co/500x300" alt="Medical illustration showing healthy and sickled red blood cells side by side with doctor reviewing data on tablet" class="rounded-lg shadow-xl" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Clinical Dashboard -->
+    <section id="dashboard" class="py-12 bg-white">
+      <div class="container mx-auto px-6">
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="text-2xl font-bold text-gray-800">Patient Clinical Dashboard</h2>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500"> </span>
+            <button class="text-primary">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Alert Bar -->
+        <div class="p-4 mb-6 rounded-lg emergency-card flex items-start bg-red-50 pulse-alert">
+          <div class="mr-3 mt-1">
+            <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-red-700">High Risk Alert</h4>
+            <p class="text-sm text-red-600">Patient hemoglobin level critical at   g/dL. Recommend immediate reevaluation.</p>
+          </div>
+          <button class="ml-auto text-red-500 hover:text-red-700">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <!-- Vital Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div class="medical-card flex items-center p-4">
+            <div class="mr-4 bg-blue-100 p-3 rounded-lg">
+              <i class="fas fa-heartbeat text-primary text-xl"></i>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">Hemoglobin</p>
+              <p class="data-value"> /dL</p>
+              <p class="text-xs text-red-500"> </p>
+            </div>
+          </div>
+          
+          <div class="medical-card flex items-center p-4">
+            <div class="mr-4 bg-amber-100 p-3 rounded-lg">
+              <i class="fas fa-procedures text-amber-500 text-xl"></i>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">Pain Crises (30d)</p>
+              <p class="data-value"></p>
+              <p class="text-xs text-green-500"> </p>
+            </div>
+          </div>
+          
+          <div class="medical-card flex items-center p-4">
+            <div class="mr-4 bg-green-100 p-3 rounded-lg">
+              <i class="fas fa-prescription-bottle-alt text-green-500 text-xl"></i>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">Medication Adherence</p>
+              <p class="data-value"> </p>
+              <p class="text-xs text-green-500">↑ </p>
+            </div>
+          </div>
+          
+          <div class="medical-card flex items-center p-4">
+            <div class="mr-4 bg-purple-100 p-3 rounded-lg">
+              <i class="fas fa-flask text-purple-500 text-xl"></i>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">WBC Count</p>
+              <p class="data-value"> </p>
+              <p class="text-xs text-red-500"> </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div class="medical-card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-medium text-gray-700">Hemoglobin Trends</h3>
+              <select class="text-sm border border-gray-200 rounded px-2 py-1">
+                <option>Last 30 Days</option>
+                <option>Last 90 Days</option>
+                <option>Last Year</option>
+              </select>
+            </div>
+            <canvas id="hemoChart" height="280"></canvas>
+          </div>
+          
+          <div class="medical-card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-medium text-gray-700">Predicted Stroke Risk</h3>
+              <div class="text-sm bg-blue-100 text-primary px-2 py-1 rounded-full">AI-Powered</div>
+            </div>
+            <div id="strokeGauge" class="h-full"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stroke Risk Predictor - Professional Version -->
+    <section id="predictor" class="py-12 bg-gray-50">
+      <div class="container mx-auto px-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Clinical Risk Assessment Tool</h2>
+        <p class="text-gray-600 mb-6">Enter patient lab values for immediate risk stratification</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="medical-card p-6">
+            <h3 class="font-bold text-lg text-gray-800 mb-4">Input Patient Data</h3>
+            <form id="clinicalForm" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="clinicalHemo" class="block text-sm font-medium text-gray-700 mb-1">Hemoglobin (g/dL)</label>
+                  <div class="relative">
+                    <input type="number" id="clinicalHemo" class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent pl-10">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span class="text-gray-500">g/dL</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label for="clinicalHbf" class="block text-sm font-medium text-gray-700 mb-1">HbF % (if available)</label>
+                  <div class="relative">
+                    <input type="number" id="clinicalHbf" class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent pl-10">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span class="text-gray-500">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="clinicalWbc" class="block text-sm font-medium text-gray-700 mb-1">WBC Count</label>
+                  <div class="relative">
+                    <input type="number" id="clinicalWbc" class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent pl-16">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span class="text-gray-500">x10³/μL</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label for="clinicalPlt" class="block text-sm font-medium text-gray-700 mb-1">Platelet Count</label>
+                  <div class="relative">
+                    <input type="number" id="clinicalPlt" class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent pl-16">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span class="text-gray-500">x10³/μL</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label for="clinicalTreat" class="block text-sm font-medium text-gray-700 mb-1">Current Treatment</label>
+                <select id="clinicalTreat" class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent">
+                  <option value="">Select treatment...</option>
+                  <option value="hydroxyurea">Hydroxyurea</option>
+                  <option value="transfusion">Chronic Transfusions</option>
+                  <option value="voxelotor">Voxelotor</option>
+                  <option value="crizanlizumab">Crizanlizumab</option>
+                  <option value="none">No Disease-Modifying Therapy</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="clinicalHistory" class="block text-sm font-medium text-gray-700 mb-1">Clinical History</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                    <span class="text-sm">Stroke</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                    <span class="text-sm">ACS</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                    <span class="text-sm">Priapism</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                    <span class="text-sm">AVN</span>
+                  </label>
+                </div>
+              </div>
+              
+              <button type="submit" class="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-secondary transition">
+                Calculate Clinical Risk
+                <i class="fas fa-calculator ml-2"></i>
+              </button>
+            </form>
+          </div>
+          
+          <div id="clinicalResults" class="medical-card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-lg text-gray-800">Risk Assessment Results</h3>
+              <div class="flex space-x-2">
+                <button class="text-primary hover:text-secondary">
+                  <i class="fas fa-print"></i>
+                </button>
+                <button class="text-primary hover:text-secondary">
+                  <i class="fas fa-file-pdf"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="text-center py-8">
+              <div class="mx-auto w-48 h-48 rounded-full flex items-center justify-center border-8 border-gray-200 mb-4">
+                <span class="text-3xl font-bold text-gray-500">--</span>
+              </div>
+              <p class="text-gray-500">Submit patient data to calculate risk score</p>
+            </div>
+            
+            <div class="space-y-3">
+              <h4 class="font-medium text-gray-700">Recommended Clinical Actions:</h4>
+              <ul class="list-disc pl-5 text-gray-600 space-y-1">
+                <li>Enter patient values to generate recommendations</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Educational Game - Professional Version -->
+    <section id="game" class="py-12 bg-white">
+      <div class="container mx-auto px-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Interactive Patient Education</h2>
+        <p class="text-gray-600 mb-6">3D visualization of sickle cell effects and lifestyle management</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="medical-card p-6">
+            <h3 class="font-bold text-lg text-gray-800 mb-4">Healthy Lifestyle Simulator</h3>
+            <p class="text-gray-600 mb-4">Help patients understand how their choices affect blood cells:</p>
+            
+            <canvas id="gameCanvas" width="500" height="300"></canvas>
+            
+            <div class="grid grid-cols-3 gap-4 mt-4">
+              <button class="bg-blue-100 text-primary p-3 rounded-lg hover:bg-blue-200 transition">
+                <i class="fas fa-tint mb-1"></i><br>Hydration
+              </button>
+              <button class="bg-green-100 text-green-700 p-3 rounded-lg hover:bg-green-200 transition">
+                <i class="fas fa-running mb-1"></i><br>Exercise
+              </button>
+              <button class="bg-red-100 text-red-700 p-3 rounded-lg hover:bg-red-200 transition">
+                <i class="fas fa-smoking mb-1"></i><br>Smoking
+              </button>
+              <button class="bg-amber-100 text-amber-700 p-3 rounded-lg hover:bg-amber-200 transition">
+                <i class="fas fa-pills mb-1"></i><br>Medication
+              </button>
+              <button class="bg-indigo-100 text-indigo-700 p-3 rounded-lg hover:bg-indigo-200 transition">
+                <i class="fas fa-cloud-sun mb-1"></i><br>Temperature
+              </button>
+              <button class="bg-teal-100 text-teal-700 p-3 rounded-lg hover:bg-teal-200 transition">
+                <i class="fas fa-bed mb-1"></i><br>Rest
+              </button>
+            </div>
+            
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+              <h4 class="font-medium text-primary mb-2">Clinical Teaching Points:</h4>
+              <p class="text-sm text-gray-700">
+                • Hydration prevents cell dehydration and sickling<br>
+                • Regular moderate exercise improves circulation<br>
+                • Smoking dramatically increases vaso-occlusive risk<br>
+                • Medications like hydroxyurea raise HbF levels
+              </p>
+            </div>
+          </div>
+          
+          <div>
+            <div class="medical-card p-6 mb-6">
+              <h3 class="font-bold text-lg text-gray-800 mb-4">Blood Cell Comparison</h3>
+              <div class="flex justify-around">
+                <div class="text-center">
+                  <img src="https://placehold.co/150" alt="3D microscopic view of normal rounded red blood cells in a healthy patient" class="w-full rounded mb-2">
+                  <p class="text-sm font-medium">Healthy RBCs</p>
+                </div>
+                <div class="text-center">
+                  <img src="https://placehold.co/150" alt="3D microscopic view of rigid, sickle-shaped red blood cells that obstruct blood flow in vessels" class="w-full rounded mb-2">
+                  <p class="text-sm font-medium text-red-500">Sickled Cells</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="medical-card p-6">
+              <h3 class="font-bold text-lg text-gray-800 mb-4">Patient Resources</h3>
+              <div class="space-y-3">
+                <a href="#" class="flex items-center p-3 hover:bg-gray-50 rounded transition">
+                  <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center mr-3">
+                    <i class="fas fa-file-pdf"></i>
+                  </div>
+                  <div>
+                    <p class="font-medium">Sickle Cell Nutrition Guide</p>
+                    <p class="text-xs text-gray-500">PDF • 2.4MB</p>
+                  </div>
+                  <div class="ml-auto text-gray-400">
+                    <i class="fas fa-chevron-right"></i>
+                  </div>
+                </a>
+                
+                <a href="#" class="flex items-center p-3 hover:bg-gray-50 rounded transition">
+                  <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center mr-3">
+                    <i class="fas fa-video"></i>
+                  </div>
+                  <div>
+                    <p class="font-medium">Pain Management Techniques</p>
+                    <p class="text-xs text-gray-500">Video • 4:22</p>
+                  </div>
+                  <div class="ml-auto text-gray-400">
+                    <i class="fas fa-chevron-right"></i>
+                  </div>
+                </a>
+                
+                <a href="#" class="flex items-center p-3 hover:bg-gray-50 rounded transition">
+                  <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center mr-3">
+                    <i class="fas fa-hospital"></i>
+                  </div>
+                  <div>
+                    <p class="font-medium">Finding a Specialist</p>
+                    <p class="text-xs text-gray-500">Interactive Map</p>
+                  </div>
+                  <div class="ml-auto text-gray-400">
+                    <i class="fas fa-chevron-right"></i>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Telemedicine Section -->
+    <section id="telemed" class="py-12 bg-gray-50">
+      <div class="container mx-auto px-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Secure Telemedicine</h2>
+        <p class="text-gray-600 mb-6">HIPAA-compliant virtual visits with your hematology team</p>
+        
+        <div class="medical-card p-6 overflow-hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h3 class="font-bold text-lg text-gray-800 mb-4">Schedule a Consultation</h3>
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Select Provider</label>
+                <div class="border border-gray-300 rounded-lg p-2">
+                  <div class="flex items-center p-2 hover:bg-gray-50 cursor-pointer rounded">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-primary flex items-center justify-center font-bold mr-3">
+                      JD
+                    </div>
+                    <div>
+                      <p class="font-medium">Dr. </p>
+                      <p class="text-xs text-gray-500">Hematology Specialist</p>
+                    </div>
+                    <div class="ml-auto text-primary">
+                      <i class="fas fa-chevron-right"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Available Appointments</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <button class="border border-gray-300 rounded-lg p-2 text-center hover:border-primary hover:bg-blue-50 transition">
+                    <p class="font-medium">   </p>
+                    <p class="text-xs text-gray-500">  </p>
+                  </button>
+                  <button class="border border-primary bg-blue-50 rounded-lg p-2 text-center">
+                    <p class="font-medium text-primary">   </p>
+                    <p class="text-xs text-primary">    </p>
+                  </button>
+                  <button class="border border-gray-300 rounded-lg p-2 text-center hover:border-primary hover:bg-blue-50 transition">
+                    <p class="font-medium">    </p>
+                    <p class="text-xs text-gray-500">  </p>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Reason for Visit</label>
+                <textarea class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent" rows="3" placeholder="Briefly describe your concerns..."></textarea>
+              </div>
+              
+              <button class="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-secondary transition">
+                Confirm Appointment
+              </button>
+            </div>
+            
+            <div class="flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden relative">
+              <img src="https://placehold.co/500x300" alt="Doctor smiling while conducting a video visit with patient on tablet" class="w-full h-full object-cover" />
+              <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
+                <p class="font-bold">Our Telemedicine Promise:</p>
+                <p class="text-sm">Secure, convenient care from your hematology team with no travel required</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Professional Footer -->
+  <footer class="bg-gray-800 text-white py-12">
+    <div class="container mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-lg font-bold mb-4">SickleAI Pro</h3>
+          <p class="text-gray-300 text-sm mb-4">
+            Advanced medical management platform for sickle cell disease patients and providers.
+          </p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-300 hover:text-white">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="text-gray-300 hover:text-white">
+              <i class="fab fa-linkedin-in"></i>
+            </a>
+            <a href="#" class="text-gray-300 hover:text-white">
+              <i class="fab fa-researchgate"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="font-bold mb-4">For Patients</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-300 hover:text-white text-sm">Getting Started</a></li>
+            <li><a href="#" class="text-gray-300 hover:text-white text-sm">Understanding Your Risk</a></li>
+            <li><a href="#" class="text-gray-300 hover:text-white text-sm">Pain Management</a></li>
+            <li><a href="#" class="text-gray-300 hover:text-white text-sm">Support Groups</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="font-bold mb-4">For Providers</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-300 hover:text-white text-sm">Clinical Dashboard</a></li>
+            <li><a href="#" class="text-gray-300 hover:text-white text-sm">Risk Stratification</li>
+            <li><a href="#" class="text-gray-300 hover:text-white text-sm">Treatment Guidelines</a></li>
+            <li><a href="#" class="text-gray-300 hover:text-white text-sm">CME Resources</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="font-bold mb-4">Contact</h3>
+          <address class="not-italic text-gray-300 text-sm">
+            <p class="mb-1">123 Medical Drive</p>
+            <p class="mb-1">Suite 200</p>
+            <p class="mb-1">Boston, MA 02115</p>
+            <p class="mt-4"><i class="fas fa-phone mr-2"></i> (617) 555-0123</p>
+            <p><i class="fas fa-envelope mr-2"></i> support@sickleai.org</p>
+          </address>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400 text-sm">
+        <p>© 2023 SickleAI Pro. All rights reserved.</p>
+        <p class="mt-2">HIPAA-compliant • SOC 2 Certified</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Initialize Charts
+    document.addEventListener('DOMContentLoaded', function() {
+      // Hemoglobin Chart
+      const hemoCtx = document.getElementById('hemoChart').getContext('2d');
+      const hemoChart = new Chart(hemoCtx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Hemoglobin (g/dL)',
+            data: [8.2, 7.9, 8.4, 7.5, 6.8, 7.2],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: false,
+              min: 6,
+              max: 10
+            }
+          }
+        }
+      });
+      
+      // Stroke Risk Gauge
+      const strokeGauge = {
+        chart: {
+          type: 'radialBar',
+          height: 280,
+        },
+        plotOptions: {
+          radialBar: {
+            startAngle: -90,
+            endAngle: 90,
+            track: {
+              background: "#e0e0e0",
+              strokeWidth: '97%',
+              margin: 5,
+            },
+            dataLabels: {
+              name: {
+                show: false
+              },
+              value: {
+                offsetY: -10,
+                fontSize: '22px',
+                color: '#374151',
+                fontWeight: 'bold'
+              }
+            }
+          }
+        },
+        series: [],
+        labels: ['Stroke Risk']
+      };
+      
+      const gauge = new ApexCharts(document.querySelector("#strokeGauge"), strokeGauge);
+      gauge.render();
+      
+      // Clinical Form Submission
+      document.getElementById('clinicalForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Mock risk calculation
+        const hemo = parseFloat(document.getElementById('clinicalHemo').value) || 0;
+        const riskScore = Math.min(Math.max(100 - (hemo * 6), 10), 95);
+        
+        // Update gauge
+        gauge.updateSeries([riskScore]);
+        
+        // Set color based on risk
+        let color;
+        if (riskScore < 40) color = '#10B981';
+        else if (riskScore < 70) color = '#F59E0B';
+        else color = '#EF4444';
+        
+        gauge.updateOptions({
+          plotOptions: {
+            radialBar: {
+              track: {
+                background: "#e0e0e0"
+              },
+              dataLabels: {
+                value: {
+                  color: color
+                }
+              }
+            }
+          },
+          colors: [color]
+        });
+        
+        // Show results section
+        const resultsEl = document.getElementById('clinicalResults');
+        resultsEl.querySelector('span.text-3xl').textContent = riskScore;
+        resultsEl.querySelector('span.text-3xl').classList.remove('text-gray-500');
+        
+        if (riskScore < 40) {
+          resultsEl.querySelector('span.text-3xl').classList.add('text-green-600');
+          resultsEl.querySelector('div.w-48').classList.remove('border-gray-200');
+          resultsEl.querySelector('div.w-48').classList.add('border-green-200');
+        } else if (riskScore < 70) {
+          resultsEl.querySelector('span.text-3xl').classList.add('text-amber-500');
+          resultsEl.querySelector('div.w-48').classList.remove('border-gray-200');
+          resultsEl.querySelector('div.w-48').classList.add('border-amber-200');
+        } else {
+          resultsEl.querySelector('span.text-3xl').classList.add('text-red-600');
+          resultsEl.querySelector('div.w-48').classList.remove('border-gray-200');
+          resultsEl.querySelector('div.w-48').classList.add('border-red-200');
+        }
+        
+        // Update recommendations
+        const recList = resultsEl.querySelector('ul');
+        recList.innerHTML = '';
+        
+        let recommendations = [];
+        if (riskScore < 40) {
+          recommendations = [
+            "Continue current therapy",
+            "Monitor Hb every 3 months",
+            "Encourage hydration"
+          ];
+        } else if (riskScore < 70) {
+          recommendations = [
+            "Consider starting hydroxyurea if not already on therapy",
+            "Monthly clinic visits recommended",
+            "Consider TCD screening if available"
+          ];
+        } else {
+          recommendations = [
+            "Immediate hematology consultation",
+            "Strongly consider chronic transfusions",
+            "MRI/MRA of the brain if symptomatic",
+            "Daily folic acid supplementation"
+          ];
+        }
+        
+        recommendations.forEach(rec => {
+          const li = document.createElement('li');
+          li.textContent = rec;
+          recList.appendChild(li);
+        });
+      });
+      
+      // Simple Game Canvas (would be more complex in production)
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      function drawCells() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw healthy cells
+        ctx.fillStyle = '#3b82f6';
+        for(let i = 0; i < 5; i++) {
+          ctx.beginPath();
+          ctx.arc(80 + (i * 80), 100, 15, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        // Draw sickled cells
+        ctx.fillStyle = '#ef4444';
+        for(let i = 0; i < 5; i++) {
+          ctx.save();
+          ctx.translate(80 + (i * 80), 200);
+          ctx.rotate(i % 2 ? 0.2 : -0.2);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 25, 10, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      
+      drawCells();
+    });
+  </script>
+</body>
+</html>
